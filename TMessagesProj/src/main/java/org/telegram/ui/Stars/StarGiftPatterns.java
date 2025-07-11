@@ -2,12 +2,22 @@ package org.telegram.ui.Stars;
 
 import static org.telegram.messenger.AndroidUtilities.dp;
 import static org.telegram.messenger.AndroidUtilities.dpf2;
+import static org.telegram.messenger.AndroidUtilities.lerp;
 
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RadialGradient;
+import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
+
+import androidx.annotation.Nullable;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.ui.ActionBar.Theme;
+
+import java.util.HashSet;
 
 public class StarGiftPatterns {
 
@@ -98,6 +108,118 @@ public class StarGiftPatterns {
 
     public static void drawPattern(Canvas canvas, Drawable pattern, float w, float h, float alpha, float scale) {
         drawPattern(canvas, TYPE_DEFAULT, pattern, w, h, alpha, scale);
+    }
+
+    private static Bitmap whiteSemitransparentBackground = null;
+
+    public static void drawPatternNew(Canvas canvas, Drawable pattern, float w, float h, float animationProgress) {
+        if (w == 0 || h == 0 || animationProgress == 0) {
+            return;
+        }
+
+        System.out.println("##### animationProgress: " + animationProgress);
+
+        float centerX = w / 2f;
+        float centerY = h / 2f;
+
+        if (whiteSemitransparentBackground == null) {
+            whiteSemitransparentBackground = generateRadialGradientBitmap((int) w, (int) h, w / 2, h / 2, h / 2, new int[]{Color.parseColor("#40FFFFFF"), Color.TRANSPARENT}, null);
+        }
+        canvas.drawBitmap(whiteSemitransparentBackground, 0f, 0f, null);
+
+        int iconSize = (int)(dp(20));
+
+        HashSet skipIds = new HashSet<>();
+
+        // 1 icons set
+        skipIds.clear();
+        float additionalAlpha = lerp(0.5f, 0f, 1 - ((dp(150) - w * 0.18f * animationProgress) / (float)dp(150)));
+        float alpha = animationProgress - additionalAlpha;
+        if (alpha < 0) {
+            alpha = 0;
+        }
+        drawIcons(canvas, pattern, centerX, centerY, w * 0.18f * animationProgress, 6, iconSize, alpha, 1.0f, skipIds);
+
+        // 2 icons set
+        skipIds.add(0);
+        skipIds.add(2);
+        additionalAlpha = lerp(0.5f, 0f, 1 - ((dp(150) - w * 0.25f * animationProgress) / (float)dp(150)));
+        alpha = (animationProgress - 0.2f - additionalAlpha);
+        if (alpha < 0) {
+            alpha = 0;
+        }
+        drawIcons(canvas, pattern, centerX, centerY, w * 0.25f * animationProgress, 4, iconSize, alpha, 0.95f, skipIds);
+
+        // 12 icons set
+        skipIds.add(0);
+        skipIds.add(2);
+        skipIds.add(3);
+        skipIds.add(4);
+        skipIds.add(6);
+        skipIds.add(8);
+        skipIds.add(9);
+        skipIds.add(10);
+        skipIds.add(12);
+        additionalAlpha = lerp(0.5f, 0f, 1 - ((dp(150) - w * 0.3f * animationProgress) / (float)dp(150)));
+        alpha = (animationProgress - 0.4f - additionalAlpha);
+        if (alpha < 0) {
+            alpha = 0;
+        }
+        drawIcons(canvas, pattern, centerX, centerY, w * 0.3f * animationProgress, 12, iconSize, alpha, 0.9f, skipIds);
+
+        // 3 icons set
+        skipIds.clear();
+        additionalAlpha = lerp(0.5f, 0f, 1 - ((dp(150) - w * 0.33f * animationProgress) / (float)dp(150)));
+        alpha = (animationProgress - 0.5f - additionalAlpha);
+        if (alpha < 0) {
+            alpha = 0;
+        }
+        drawIcons(canvas, pattern, centerX, centerY, w * 0.33f * animationProgress, 6, iconSize, alpha, 0.85f, skipIds);
+
+        // 4 icons set
+        skipIds.add(0);
+        skipIds.add(2);
+        additionalAlpha = lerp(0.5f, 0f, 1 - ((dp(150) - w * 0.4f * animationProgress) / (float)dp(150)));
+        alpha = (animationProgress - 0.6f - additionalAlpha);
+        if (alpha < 0) {
+            alpha = 0;
+        }
+        drawIcons(canvas, pattern, centerX, centerY, w * 0.4f * animationProgress, 4, iconSize, alpha, 0.8f, skipIds);
+    }
+
+    private static Bitmap generateRadialGradientBitmap(int width, int height, float centerX, float centerY, float radius, int[] colors, @Nullable float[] positions) {
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+        RadialGradient shader = new RadialGradient(centerX, centerY, radius, colors, positions, Shader.TileMode.CLAMP);
+        paint.setShader(shader);
+
+        canvas.drawCircle(centerX, centerY, radius, paint);
+        return bitmap;
+    }
+
+    private static void drawIcons(Canvas canvas, Drawable pattern, float centerX, float centerY, float radius, int iconCount, int iconSize, float alpha, float scale, HashSet<Integer> skip) {
+        for (int i = 0; i < iconCount; i++) {
+            if (skip != null && skip.contains(i)) {
+                continue;
+            }
+            double angle = Math.toRadians(360.0 / iconCount * i - 90);
+
+            float iconCenterX = (float) (centerX + radius * Math.cos(angle));
+            float iconCenterY = (float) (centerY + radius * Math.sin(angle));
+
+            int left = (int) (iconCenterX - iconSize * scale / 2f);
+            int top = (int) (iconCenterY - iconSize * scale / 2f);
+            int right = (int)(left + iconSize * scale);
+            int bottom = (int)(top + iconSize * scale);
+
+            int intAlpha = (int) (alpha * 255);
+            pattern.setAlpha(intAlpha);
+
+            pattern.setBounds(left, top, right, bottom);
+            pattern.draw(canvas);
+        }
     }
 
     public static void drawPattern(Canvas canvas, int type, Drawable pattern, float w, float h, float alpha, float scale) {

@@ -2612,6 +2612,8 @@ public class AndroidUtilities {
         return new File("");
     }
 
+
+
     public static int dp(float value) {
         if (value == 0) {
             return 0;
@@ -5015,8 +5017,8 @@ public class AndroidUtilities {
         return (a + delta * f + 360) % 360;
     }
 
-    public static float lerp(float a, float b, float f) {
-        return a + f * (b - a);
+    public static float lerp(float start, float end, float f) {
+        return start + f * (end - start);
     }
 
     public static float lerp(boolean a, boolean b, float f) {
